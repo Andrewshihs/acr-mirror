@@ -20,4 +20,5 @@
 #httpd:2
 #ddsderek/wxchat:latest
 #fatedier/frps:v0.61.2
---platform=linux/arm64 metacubex/mihomo:latest
+# --platform=linux/arm64 metacubex/mihomo:latest
+--platform=linux/arm64 jxxghp/moviepilot-v2:latest
