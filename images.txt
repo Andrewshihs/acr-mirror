@@ -1,24 +1,25 @@
-#nginx
-#支持私库
-#k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.0.0
-#xhofe/alist:latest
-#支持指定架构
-#--platform=linux/arm64 xiaoyaliu/alist
-#minio/minio
-#--platform=linux/arm64 registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.5.2@sha256:e8825994b7a2c7497375a9b945f386506ca6a3eda80b89b74ef2db743f66a5ea
-#--platform=linux/arm64 registry.k8s.io/ingress-nginx/controller:v1.12.1@sha256:d2fbc4ec70d8aa2050dd91a91506e998765e86c96f32cffb56c503c9c34eed5b
+﻿# Docker 镜像同步列表
+# 格式：每行一个镜像地址，支持 tag，支持私有仓库路径
+# 使用 # 开头作为注释
+# 所有架构会自动同步（--all），无需指定 --platform
 
-#--platform=linux/arm64 fatedier/frpc:v0.61.2
-#rancher/helm-controller:v0.16.10
-#mysql:latest
-#--platform=linux/arm64 bitnami/apache:2.4.62-debian-12-r13
-#rancher/klipper-helm:v0.9.5-build20250306
-#mysql:5.7
-#--platform=linux/arm64 registry-1.docker.io/distribution/registry:3.0
-#vllm/vllm-openai:v0.8.5
-#rayproject/ray:2.41.0
-#httpd:2
-#ddsderek/wxchat:latest
-#fatedier/frps:v0.61.2
-# --platform=linux/arm64 metacubex/mihomo:latest
---platform=linux/arm64 jxxghp/moviepilot-v2:latest
+# === 示例（取消注释即可启用）===
+
+# 基础镜像
+# nginx:latest
+# alpine:latest
+
+# 带命名空间的镜像
+# xhofe/alist:latest
+# fatedier/frps:v0.61.2
+
+# 私有仓库镜像
+# k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.0.0
+# registry.k8s.io/ingress-nginx/controller:v1.12.1
+
+# AI/ML 镜像
+# vllm/vllm-openai:v0.8.5
+# rayproject/ray:2.41.0
+
+# 当前启用
+jxxghp/moviepilot-v2:latest

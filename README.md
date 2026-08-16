@@ -1,80 +1,109 @@
 # Docker Images Pusher
 
-使用Github Action将国外的Docker镜像转存到阿里云私有仓库，供国内服务器使用，免费易用<br>
-- 支持DockerHub, gcr.io, k8s.io, ghcr.io等任意仓库<br>
-- 支持最大40GB的大型镜像<br>
-- 使用阿里云的官方线路，速度快<br>
+使用 GitHub Actions + skopeo 将 Docker 镜像全架构同步到阿里云私有仓库，供国内服务器使用。
+
+- ✅ 支持 DockerHub、gcr.io、k8s.io、ghcr.io 等任意仓库
+- ✅ 自动同步所有架构（amd64/arm64/...），`docker pull` 自动匹配
+- ✅ 不落盘、不装 Docker，skopeo 直接流式传输
+- ✅ 支持最大 40GB+ 的大型镜像
+- ✅ 自动处理镜像重名
 
 视频教程：https://www.bilibili.com/video/BV1Zn4y19743/
 
-作者：**[技术爬爬虾](https://github.com/tech-shrimp/me)**<br>
-B站，抖音，Youtube全网同名，转载请注明作者<br>
+作者：**[技术爬爬虾](https://github.com/tech-shrimp/me)**
+B站，抖音，Youtube 全网同名，转载请注明作者
+
+---
+
+## 改进说明（skopeo 版本）
+
+本项目基于 [tech-shrimp/docker_image_pusher](https://github.com/tech-shrimp/docker_image_pusher) 改进，主要变化：
+
+| 原版 | 改进版 |
+|------|--------|
+| docker pull → tag → push | skopeo copy 一步到位 |
+| 需要 Docker daemon | 不需要，skopeo 独立运行 |
+| 镜像落盘，需清理磁盘 | 不落盘，流式传输 |
+| 需手动指定 `--platform`，前缀区分 | `--all` 全架构，manifest list 自动匹配 |
+| 磁盘空间折腾（删 .NET/Haskell） | 不需要，无磁盘压力 |
+
+---
 
 ## 使用方式
 
+### 1. 配置阿里云
 
-### 配置阿里云
-登录阿里云容器镜像服务<br>
-https://cr.console.aliyun.com/<br>
-启用个人实例，创建一个命名空间（**ALIYUN_NAME_SPACE**）
-![](/doc/命名空间.png)
+登录 [阿里云容器镜像服务](https://cr.console.aliyun.com/)
 
-访问凭证–>获取环境变量<br>
-用户名（**ALIYUN_REGISTRY_USER**)<br>
-密码（**ALIYUN_REGISTRY_PASSWORD**)<br>
-仓库地址（**ALIYUN_REGISTRY**）<br>
+- 启用个人实例
+- 创建一个命名空间 → 记为 **ALIYUN_NAME_SPACE**
+- 访问凭证 → 获取用户名 **ALIYUN_REGISTRY_USER** 和密码 **ALIYUN_REGISTRY_PASSWORD**
+- 仓库地址 → 记为 **ALIYUN_REGISTRY**（如 `registry.cn-hangzhou.aliyuncs.com`）
 
-![](/doc/用户名密码.png)
+### 2. Fork 本项目
 
+Fork 后进入 Settings → Secrets and variables → Actions → New Repository secret
 
-### Fork本项目
-Fork本项目<br>
-#### 启动Action
-进入您自己的项目，点击Action，启用Github Action功能<br>
-#### 配置环境变量
-进入Settings->Secret and variables->Actions->New Repository secret
-![](doc/配置环境变量.png)
-将上一步的**四个值**<br>
-ALIYUN_NAME_SPACE,ALIYUN_REGISTRY_USER，ALIYUN_REGISTRY_PASSWORD，ALIYUN_REGISTRY<br>
-配置成环境变量
+添加以下 4 个 Secret：
 
-### 添加镜像
-打开images.txt文件，添加你想要的镜像 
-可以加tag，也可以不用(默认latest)<br>
-可添加 --platform=xxxxx 的参数指定镜像架构<br>
-可使用 k8s.gcr.io/kube-state-metrics/kube-state-metrics 格式指定私库<br>
-可使用 #开头作为注释<br>
-![](doc/images.png)
-文件提交后，自动进入Github Action构建
+| Secret 名称 | 值 |
+|-------------|---|
+| `ALIYUN_REGISTRY` | 阿里云仓库地址 |
+| `ALIYUN_NAME_SPACE` | 命名空间 |
+| `ALIYUN_REGISTRY_USER` | 用户名 |
+| `ALIYUN_REGISTRY_PASSWORD` | 密码 |
 
-### 使用镜像
-回到阿里云，镜像仓库，点击任意镜像，可查看镜像状态。(可以改成公开，拉取镜像免登录)
-![](doc/开始使用.png)
+### 3. 添加镜像
 
-在国内服务器pull镜像, 例如：<br>
+编辑 `images.txt`，每行一个镜像地址：
+
 ```
-docker pull registry.cn-hangzhou.aliyuncs.com/shrimp-images/alpine
-```
-registry.cn-hangzhou.aliyuncs.com 即 ALIYUN_REGISTRY(阿里云仓库地址)<br>
-shrimp-images 即 ALIYUN_NAME_SPACE(阿里云命名空间)<br>
-alpine 即 阿里云中显示的镜像名<br>
+# 简单镜像
+nginx:latest
+alpine:3.19
 
-### 多架构
-需要在images.txt中用 --platform=xxxxx手动指定镜像架构
-指定后的架构会以前缀的形式放在镜像名字前面
-![](doc/多架构.png)
+# 带命名空间
+xhofe/alist:latest
+fatedier/frps:v0.61.2
 
-### 镜像重名
-程序自动判断是否存在名称相同, 但是属于不同命名空间的情况。
-如果存在，会把命名空间作为前缀加在镜像名称前。
-例如:
+# 私有仓库
+k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.0.0
 ```
-xhofe/alist
-xiaoyaliu/alist
-```
-![](doc/镜像重名.png)
 
-### 定时执行
-修改/.github/workflows/docker.yaml文件
-添加 schedule即可定时执行(此处cron使用UTC时区)
-![](doc/定时执行.png)
+提交后自动触发 GitHub Actions 同步。
+
+### 4. 使用镜像
+
+在国内服务器拉取：
+
+```bash
+docker pull registry.cn-hangzhou.aliyuncs.com/<命名空间>/nginx:latest
+```
+
+Docker 会根据机器架构自动选择对应的镜像（amd64/arm64/...）。
+
+---
+
+## 重名处理
+
+如果 `images.txt` 中有同名镜像（不同命名空间），会自动加命名空间前缀：
+
+```
+xhofe/alist      → registry.xxx/my-space/xhofe_alist:latest
+xiaoyaliu/alist  → registry.xxx/my-space/xiaoyaliu_alist:latest
+```
+
+---
+
+## 定时执行
+
+修改 `.github/workflows/docker.yaml`，添加 schedule：
+
+```yaml
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 0 * * 1'  # 每周一 UTC 00:00
+```
