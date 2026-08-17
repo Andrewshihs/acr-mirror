@@ -24,4 +24,4 @@ ghcr.io/fatedier/frpc:v0.70.1
 
 # 当前启用
 # jxxghp/moviepilot-v2:latest
-docker.io/linuxserver/qbittorrent:5.2.3
+docker.io/linuxserver/qbittorrent:4.6.7
