@@ -18,18 +18,15 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v5
 
-    - name: Install skopeo
+    - name: Install crane
       run: |
-        sudo apt-get update
-        sudo apt-get install -y skopeo
-        skopeo --version
+        curl -sL https://github.com/google/go-containerregistry/releases/latest/download/go-containerregistry_Linux_x86_64.tar.gz | tar xz
+        sudo mv crane /usr/local/bin/
+        crane version
 
     - name: Login to Aliyun
       run: |
-        echo "$ALIYUN_REGISTRY_PASSWORD" | skopeo login \
-          -u "$ALIYUN_REGISTRY_USER" \
-          --password-stdin \
-          "$ALIYUN_REGISTRY"
+        echo "$ALIYUN_REGISTRY_PASSWORD" | crane auth login -u "$ALIYUN_REGISTRY_USER" --password-stdin "$ALIYUN_REGISTRY"
 
     - name: Mirror all images
       run: |
@@ -100,7 +97,7 @@ jobs:
             echo "Mode:    --all (all architectures)"
             echo "========================================"
 
-            if skopeo copy --multi-arch=linux/amd64,linux/arm64 "docker://$image" "docker://$dest"; then
+            if crane copy "$image" "$dest"; then
                 echo "✅ Success: $image_name_tag"
                 success=$((success + 1))
             else
