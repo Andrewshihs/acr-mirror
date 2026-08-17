@@ -1,4 +1,4 @@
-# Docker 镜像同步列表
+﻿# Docker 镜像同步列表
 # 格式：每行一个镜像地址，支持 tag，支持私有仓库路径
 # 使用 # 开头作为注释
 # 所有架构会自动同步（--all），无需指定 --platform
@@ -24,4 +24,4 @@ ghcr.io/fatedier/frpc:v0.70.1
 
 # 当前启用
 jxxghp/moviepilot-v2:latest
-docker.io/linuxserver/qbittorrent:5.1.0
+docker.io/linuxserver/qbittorrent:5.1.4
