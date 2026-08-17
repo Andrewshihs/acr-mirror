@@ -33,6 +33,9 @@ jobs:
 
     - name: Mirror all images
       run: |
+        # 去除可能的 UTF-8 BOM
+        sed -i '1s/^\xEF\xBB\xBF//' images.txt
+
         # 第一遍：检测重名镜像
         declare -A duplicate_images
         declare -A temp_map
@@ -97,7 +100,7 @@ jobs:
             echo "Mode:    --all (all architectures)"
             echo "========================================"
 
-            if skopeo copy --all "docker://$image" "docker://$dest"; then
+            if skopeo copy --all --format v2s2 "docker://$image" "docker://$dest"; then
                 echo "✅ Success: $image_name_tag"
                 success=$((success + 1))
             else
