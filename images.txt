@@ -11,8 +11,8 @@
 
 # 带命名空间的镜像
 # xhofe/alist:latest
-fatedier/frps:v0.71.0
-fatedier/frpc:v0.71.0
+ghcr.io/fatedier/frps:v0.70.1
+ghcr.io/fatedier/frpc:v0.70.1
 
 # 私有仓库镜像
 # k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.0.0
@@ -23,4 +23,4 @@ fatedier/frpc:v0.71.0
 # rayproject/ray:2.41.0
 
 # 当前启用
-jxxghp/moviepilot-v2:latest
+# jxxghp/moviepilot-v2:latest
