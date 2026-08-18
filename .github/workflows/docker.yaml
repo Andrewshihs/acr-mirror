@@ -99,7 +99,7 @@ jobs:
             # 使用 docker buildx imagetools 复制多架构镜像
             if docker buildx imagetools create --dry-run "$image" 2>/dev/null | grep -q "manifest"; then
                 # 多架构镜像，使用 imagetools 复制
-                if docker buildx imagetools create --progress=plain "$image" "$dest"; then
+                if docker buildx imagetools create --progress=plain --tag "$dest" "$image"; then
                     echo "✅ Success: $image_name_tag"
                     success=$((success + 1))
                 else
