@@ -28,6 +28,13 @@ jobs:
         username: ${{ secrets.ALIYUN_REGISTRY_USER }}
         password: ${{ secrets.ALIYUN_REGISTRY_PASSWORD }}
 
+    - name: Install regctl
+      run: |
+        curl -sL https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 > /tmp/regctl
+        chmod +x /tmp/regctl
+        sudo mv /tmp/regctl /usr/local/bin/
+        regctl version
+
     - name: Mirror all images
       run: |
         # 去除可能的 UTF-8 BOM
@@ -96,25 +103,13 @@ jobs:
             echo "Target:  $dest"
             echo "========================================"
 
-            # 使用 docker buildx imagetools 复制多架构镜像
-            if docker buildx imagetools create --dry-run "$image" 2>/dev/null | grep -q "manifest"; then
-                # 多架构镜像，使用 imagetools 复制
-                if docker buildx imagetools create --progress=plain --tag "$dest" "$image"; then
-                    echo "✅ Success: $image_name_tag"
-                    success=$((success + 1))
-                else
-                    echo "❌ Failed: $image_name_tag"
-                    failed=$((failed + 1))
-                fi
+            # 使用 regctl 复制多架构镜像
+            if regctl image copy "$image" "$dest"; then
+                echo "✅ Success: $image_name_tag"
+                success=$((success + 1))
             else
-                # 单架构镜像，直接 pull/push
-                if docker pull "$image" && docker tag "$image" "$dest" && docker push "$dest"; then
-                    echo "✅ Success: $image_name_tag"
-                    success=$((success + 1))
-                else
-                    echo "❌ Failed: $image_name_tag"
-                    failed=$((failed + 1))
-                fi
+                echo "❌ Failed: $image_name_tag"
+                failed=$((failed + 1))
             fi
         done < images.txt
 
