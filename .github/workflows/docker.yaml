@@ -18,15 +18,15 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v5
 
-    - name: Install crane
-      run: |
-        curl -sL https://github.com/google/go-containerregistry/releases/latest/download/go-containerregistry_Linux_x86_64.tar.gz | tar xz
-        sudo mv crane /usr/local/bin/
-        crane version
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
     - name: Login to Aliyun
-      run: |
-        echo "$ALIYUN_REGISTRY_PASSWORD" | crane auth login -u "$ALIYUN_REGISTRY_USER" --password-stdin "$ALIYUN_REGISTRY"
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ secrets.ALIYUN_REGISTRY }}
+        username: ${{ secrets.ALIYUN_REGISTRY_USER }}
+        password: ${{ secrets.ALIYUN_REGISTRY_PASSWORD }}
 
     - name: Mirror all images
       run: |
@@ -94,15 +94,27 @@ jobs:
             echo "========================================"
             echo "Source:  $image"
             echo "Target:  $dest"
-            echo "Mode:    --all (all architectures)"
             echo "========================================"
 
-            if crane copy --platform=linux/amd64,linux/arm64 "$image" "$dest"; then
-                echo "✅ Success: $image_name_tag"
-                success=$((success + 1))
+            # 使用 docker buildx imagetools 复制多架构镜像
+            if docker buildx imagetools create --dry-run "$image" 2>/dev/null | grep -q "manifest"; then
+                # 多架构镜像，使用 imagetools 复制
+                if docker buildx imagetools create --progress=plain "$image" "$dest"; then
+                    echo "✅ Success: $image_name_tag"
+                    success=$((success + 1))
+                else
+                    echo "❌ Failed: $image_name_tag"
+                    failed=$((failed + 1))
+                fi
             else
-                echo "❌ Failed: $image_name_tag"
-                failed=$((failed + 1))
+                # 单架构镜像，直接 pull/push
+                if docker pull "$image" && docker tag "$image" "$dest" && docker push "$dest"; then
+                    echo "✅ Success: $image_name_tag"
+                    success=$((success + 1))
+                else
+                    echo "❌ Failed: $image_name_tag"
+                    failed=$((failed + 1))
+                fi
             fi
         done < images.txt
 
