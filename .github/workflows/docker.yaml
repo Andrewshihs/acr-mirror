@@ -97,7 +97,7 @@ jobs:
             echo "Mode:    --all (all architectures)"
             echo "========================================"
 
-            if crane copy "$image" "$dest"; then
+            if crane copy --platform=linux/amd64,linux/arm64 "$image" "$dest"; then
                 echo "✅ Success: $image_name_tag"
                 success=$((success + 1))
             else
